@@ -1,7 +1,7 @@
-# FireNEWT: Nexus for Efficient Workload Testing
-Welcome to FireNEWT (Nexus for Efficient Workload Testing), a comprehensive repository of queries and tests inspired by real-world data application production workloads. While industry-standard benchmarks like TPC-H have traditionally been used to gauge database performance, they often fall short in capturing the intricate complexities and unique demands found in actual production environments. To bridge this gap, we developed FireNEWT—a benchmark designed to offer a more accurate and representative measure of the challenges faced in modern data environments.
+# FirePower
+Welcome to FirePower, a comprehensive repository of queries and tests inspired by real-world data application production workloads. While industry-standard benchmarks like TPC-H have traditionally been used to gauge database performance, they often fall short in capturing the intricate complexities and unique demands found in actual production environments. To bridge this gap, we developed FirePower—a benchmark designed to offer a more accurate and representative measure of the challenges faced in modern data environments.
 
-This repository serves as a valuable toolkit for developers, database administrators, and researchers, providing the means to evaluate and enhance system performance under realistic operational loads. By focusing on real-world patterns, FireNEWT offers a practical approach to workload testing, ensuring that database systems are tested against the kinds of demands they will encounter in production.
+This repository serves as a valuable toolkit for developers, database administrators, and researchers, providing the means to evaluate and enhance system performance under realistic operational loads. By focusing on real-world patterns, FirePower offers a practical approach to workload testing, ensuring that database systems are tested against the kinds of demands they will encounter in production.
 
 ## About This Repository
 This repository contains a collection of benchmarks designed to simulate production workload patterns. These benchmarks are useful for evaluating the performance of database systems.
