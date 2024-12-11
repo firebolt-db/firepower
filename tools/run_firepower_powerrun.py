@@ -19,30 +19,51 @@ import httpx
 PUBLIC_REQUESTER_PAYS_BUCKET_CREDENTIALS = "CREDENTIALS = (AWS_ROLE_ARN = 'arn:aws:iam::442042532160:role/FireboltS3DatasetsAccess')"
 
 
-def format_query_templates(query_history_df, region, public_requester_pays_bucket_credentials_string=None):
+def format_query_templates(
+    query_history_df, region, public_requester_pays_bucket_credentials_string=None
+):
     for index, row in query_history_df.iterrows():
         query_text = row["query_text"]
 
         if not region:
             if "{{region}}" in query_text:
-                raise ValueError("This query history requires environment variable FB_REGION to be set.")
+                raise ValueError(
+                    "This query history requires environment variable FB_REGION to be set."
+                )
         else:
             query_text = query_text.replace("{{region}}", region)
 
         if not public_requester_pays_bucket_credentials_string:
-            public_requester_pays_bucket_credentials_string = PUBLIC_REQUESTER_PAYS_BUCKET_CREDENTIALS
-        query_text = query_text.replace("{{public_requester_pays_bucket_credentials}}",
-                                        public_requester_pays_bucket_credentials_string)
+            public_requester_pays_bucket_credentials_string = (
+                PUBLIC_REQUESTER_PAYS_BUCKET_CREDENTIALS
+            )
+        query_text = query_text.replace(
+            "{{public_requester_pays_bucket_credentials}}",
+            public_requester_pays_bucket_credentials_string,
+        )
 
         query_history_df.at[index, "query_text"] = query_text
 
 
-def run_powerrun(query_history, client_id, client_secret, account_name, engine_name, database, api_endpoint, region,
-                 public_requester_pays_bucket_credentials_string, raw_http_query=False):
+def run_powerrun(
+    query_history,
+    client_id,
+    client_secret,
+    account_name,
+    engine_name,
+    database,
+    api_endpoint,
+    region,
+    public_requester_pays_bucket_credentials_string,
+    raw_http_query=False,
+):
     df = pd.read_csv(query_history)
     df.sort_values("query_start_ts", inplace=True)
-    format_query_templates(df, region=region,
-                           public_requester_pays_bucket_credentials_string=public_requester_pays_bucket_credentials_string)
+    format_query_templates(
+        df,
+        region=region,
+        public_requester_pays_bucket_credentials_string=public_requester_pays_bucket_credentials_string,
+    )
     connection = firebolt.db.connect(
         auth=ClientCredentials(
             client_id=client_id,
@@ -54,9 +75,9 @@ def run_powerrun(query_history, client_id, client_secret, account_name, engine_n
         api_endpoint=api_endpoint,
     )
     headers = {
-                "Authorization": "Bearer " + connection._client._auth.token,
-                "Content-Type": "application/json",
-            }    
+        "Authorization": "Bearer " + connection._client._auth.token,
+        "Content-Type": "application/json",
+    }
     cursor = connection.cursor()
     start_time = None
     characters = string.digits
@@ -66,17 +87,24 @@ def run_powerrun(query_history, client_id, client_secret, account_name, engine_n
 
     request_times = OrderedDict()
     with httpx.Client(timeout=httpx.Timeout(7200.0)) as client:
-        for index, row in df.iterrows():                
+        for index, row in df.iterrows():
             query_label_decoded = json.dumps({"rid": run_id, "sql_id": row["query_id"]})
-            query_label = f'b64-{base64.b64encode(query_label_decoded.encode()).decode()}'
+            query_label = (
+                f"b64-{base64.b64encode(query_label_decoded.encode()).decode()}"
+            )
 
             if raw_http_query:
-                engine_url = connection.engine_url + f"?advanced_mode=1&result_cache_max_bytes_item=0&database={database}&engine={engine_name}&query_label={query_label}"
+                engine_url = (
+                    connection.engine_url
+                    + f"?advanced_mode=1&result_cache_max_bytes_item=0&database={database}&engine={engine_name}&query_label={query_label}"
+                )
                 t1 = time.time()
-                response = client.post(engine_url, data=row["query_text"], headers=headers)
+                response = client.post(
+                    engine_url, data=row["query_text"], headers=headers
+                )
                 t2 = time.time()
             else:
-                cursor.execute(f'set query_label={query_label}')
+                cursor.execute(f"set query_label={query_label}")
                 t1 = time.time()
                 # skip_parsing significantly speeds up the client side part of this query. This can greatly affect
                 # certain cases, such as INSERT queries with 1000 literal row VALUES.
@@ -126,10 +154,16 @@ def run_powerrun(query_history, client_id, client_secret, account_name, engine_n
         connection.close()
         return
 
-    def round(x): return np.round(x, 3)
+    def round(x):
+        return np.round(x, 3)
 
-    results_with_client_time = ((r[0], round(r[1]), round(request_times[r[0]])) for r in results)
-    df_query_history = pd.DataFrame(results_with_client_time, columns=["sql_id", "server duration, s", "client duration, s"])
+    results_with_client_time = (
+        (r[0], round(r[1]), round(request_times[r[0]])) for r in results
+    )
+    df_query_history = pd.DataFrame(
+        results_with_client_time,
+        columns=["sql_id", "server duration, s", "client duration, s"],
+    )
     print()
     print(df_query_history.to_markdown(index=False))
     print()
@@ -143,14 +177,23 @@ def run_powerrun(query_history, client_id, client_secret, account_name, engine_n
     server_median = round(np.median(values))
     server_p95 = round(np.percentile(values, 95))
 
-    values = [request_times[sql_id] for sql_id in df_query_history["sql_id"] if "system" not in sql_id and "select 1" not in sql_id and sql_id in request_times]
+    values = [
+        request_times[sql_id]
+        for sql_id in df_query_history["sql_id"]
+        if "system" not in sql_id
+        and "select 1" not in sql_id
+        and sql_id in request_times
+    ]
     client_sum = round(np.sum(values))
     client_mean = round(np.mean(values))
     client_geomean = round(np.exp(np.mean(np.log(values))))
     client_median = round(np.median(values))
     client_p95 = round(np.percentile(values, 95))
 
-    df_query_history = pd.DataFrame(results_with_client_time, columns=["", "server durations, s", "client durations, s"])
+    df_query_history = pd.DataFrame(
+        results_with_client_time,
+        columns=["", "server durations, s", "client durations, s"],
+    )
     df_query_history.loc[1] = ["sum", server_sum, client_sum]
     df_query_history.loc[2] = ["mean", server_mean, client_mean]
     df_query_history.loc[3] = ["geometric mean", server_geomean, client_geomean]
@@ -173,17 +216,17 @@ def check_env_variable(var_name):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="fireNEWT benchmark power run")
+    parser = argparse.ArgumentParser(description="FirePower benchmark power run")
     parser.add_argument(
         "--query_history",
         type=str,
         help="Optional path to query history file",
-        default="../SQL/powerrun/firenewt_1tb_powerrun.csv",
+        default="../SQL/powerrun/firepower_1tb_powerrun.csv",
     )
     parser.add_argument(
         "--raw-http-queries",
         action=argparse.BooleanOptionalAction,
-        help="If set, uses a lightweight raw HTTP query instead of the python SDK."
+        help="If set, uses a lightweight raw HTTP query instead of the python SDK.",
     )
     args = parser.parse_args()
     env_variables_set = True
@@ -194,18 +237,32 @@ if __name__ == "__main__":
     env_variables_set = env_variables_set and check_env_variable("FB_DATABASE")
 
     if env_variables_set:
-        client_id=os.environ["FB_CLIENT_ID"]
-        client_secret=os.environ["FB_CLIENT_SECRET"]
-        account_name=os.environ["FB_ACCOUNT"]
-        engine_name=os.environ["FB_ENGINE"]
-        database=os.environ["FB_DATABASE"]
-        api_endpoint=os.environ.get("FB_API")
-        region=os.environ.get("FB_REGION").strip() if os.environ.get("FB_REGION") else None
-        credentials_env_var = os.environ.get("FB_PUBLIC_REQUESTER_PAYS_BUCKET_CREDENTIALS_STRING")
-        public_requester_pays_bucket_credentials_string = credentials_env_var.strip() if credentials_env_var else None
+        client_id = os.environ["FB_CLIENT_ID"]
+        client_secret = os.environ["FB_CLIENT_SECRET"]
+        account_name = os.environ["FB_ACCOUNT"]
+        engine_name = os.environ["FB_ENGINE"]
+        database = os.environ["FB_DATABASE"]
+        api_endpoint = os.environ.get("FB_API")
+        region = (
+            os.environ.get("FB_REGION").strip() if os.environ.get("FB_REGION") else None
+        )
+        credentials_env_var = os.environ.get(
+            "FB_PUBLIC_REQUESTER_PAYS_BUCKET_CREDENTIALS_STRING"
+        )
+        public_requester_pays_bucket_credentials_string = (
+            credentials_env_var.strip() if credentials_env_var else None
+        )
         if api_endpoint is None:
             api_endpoint = "api.app.firebolt.io"
-        run_powerrun(args.query_history, client_id, client_secret, account_name, engine_name, database, api_endpoint,
-                     region=region,
-                     public_requester_pays_bucket_credentials_string=public_requester_pays_bucket_credentials_string,
-                     raw_http_query=args.raw_http_queries)
+        run_powerrun(
+            args.query_history,
+            client_id,
+            client_secret,
+            account_name,
+            engine_name,
+            database,
+            api_endpoint,
+            region=region,
+            public_requester_pays_bucket_credentials_string=public_requester_pays_bucket_credentials_string,
+            raw_http_query=args.raw_http_queries,
+        )

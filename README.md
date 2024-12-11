@@ -32,7 +32,7 @@ Specifically for Firebolt, you will need to have the following:
 Clone the repository to your local machine using:
 
 ```bash
-git clone https://github.com/firebolt-db/firenewt.git
+git clone https://github.com/firebolt-db/firepower.git
 ```
 
 Navigate to the cloned directory:
@@ -95,7 +95,7 @@ export FB_REGION=...
 #### Running Concurrency Benchmarks
 
 To run a specific benchmark, download relevant query history scripts from `s3://firebolt-benchmarks-requester-pays-us-east-1/firenewt/1tb/sql/queries` folder and execute the
-corresponding script `tools/run_firenewt_concurrent_qps.py` with the desired concurrency level and the paths to the
+corresponding script `tools/run_firepower_concurrent_qps.py` with the desired concurrency level and the paths to the
 query history files as arguments.
 
 **1 cluster 1 node type L engine high QPS benchmark**
@@ -108,7 +108,7 @@ export FB_DATABASE=...
 export FB_API=api.app.firebolt.io
 
 cd tools
-python run_firenewt_concurrent_qps.py --concurrency 200 firenewt_1tb_qps_0.csv firenewt_1tb_qps_1.csv firenewt_1tb_qps_2.csv firenewt_1tb_qps_3.csv                     
+python run_firepower_concurrent_qps.py --concurrency 200 firenewt_1tb_qps_0.csv firenewt_1tb_qps_1.csv firenewt_1tb_qps_2.csv firenewt_1tb_qps_3.csv                     
 ```
 
 **10 clusters 1 type L engine high QPS benchmark**
@@ -121,12 +121,12 @@ export FB_DATABASE=...
 export FB_API=api.app.firebolt.io
 
 cd tools
-python run_firenewt_concurrent_qps.py --concurrency 400 firenewt_1tb_qps_0.csv firenewt_1tb_qps_0.csv firenewt_1tb_qps_1.csv firenewt_1tb_qps_2.csv firenewt_1tb_qps_3.csv firenewt_1tb_qps_4.csv firenewt_1tb_qps_5.csv firenewt_1tb_qps_6.csv firenewt_1tb_qps_7.csv firenewt_1tb_qps_8.csv firenewt_1tb_qps_9.csv firenewt_1tb_qps_10.csv firenewt_1tb_qps_11.csv firenewt_1tb_qps_12.csv firenewt_1tb_qps_13.csv firenewt_1tb_qps_14.csv firenewt_1tb_qps_15.csv firenewt_1tb_qps_16.csv firenewt_1tb_qps_17.csv firenewt_1tb_qps_18.csv firenewt_1tb_qps_19.csv
+python run_firepower_concurrent_qps.py --concurrency 400 firenewt_1tb_qps_0.csv firenewt_1tb_qps_0.csv firenewt_1tb_qps_1.csv firenewt_1tb_qps_2.csv firenewt_1tb_qps_3.csv firenewt_1tb_qps_4.csv firenewt_1tb_qps_5.csv firenewt_1tb_qps_6.csv firenewt_1tb_qps_7.csv firenewt_1tb_qps_8.csv firenewt_1tb_qps_9.csv firenewt_1tb_qps_10.csv firenewt_1tb_qps_11.csv firenewt_1tb_qps_12.csv firenewt_1tb_qps_13.csv firenewt_1tb_qps_14.csv firenewt_1tb_qps_15.csv firenewt_1tb_qps_16.csv firenewt_1tb_qps_17.csv firenewt_1tb_qps_18.csv firenewt_1tb_qps_19.csv
 ```
 
 #### Running the Power Run Benchmark
 
-The default parameters for `tools/run_firenewt_powerrun.py` will run the appropriate queries against the specified engine.
+The default parameters for `tools/run_firepower_powerrun.py` will run the appropriate queries against the specified engine.
 
 ```bash 
 export FB_CLIENT_ID=...
@@ -137,7 +137,7 @@ export FB_DATABASE=...
 export FB_API=api.app.firebolt.io
 
 cd tools
-python run_firenewt_powerrun.py
+python run_firepower_powerrun.py
 ```
 
 #### Running the Bulk Ingest Benchmarks
@@ -153,7 +153,7 @@ from the Firebolt web UI.
 You will need to specify the `FB_REGION` environment variable with the same region the engine is running in,
 e.g. `us-east-1`, so that the COPY FROM commands target the correct regional bucket.
 
-The query history scenarios can be run with the same command used for power runs, `run_firenewt_powerrun.py`, which is
+The query history scenarios can be run with the same command used for power runs, `run_firepower_powerrun.py`, which is
 basically a tool that issues queries from the history CSV files sequentially and gathers statistics.
 
 For example:
@@ -167,7 +167,7 @@ export FB_API=api.app.firebolt.io
 export FB_REGION=us-east-1
 
 cd tools
-python run_firenewt_powerrun.py --query_history=../SQL/bulk_ingestion/bi_1tb_snappy_parquet.csv
+python run_firepower_powerrun.py --query_history=../SQL/bulk_ingestion/bi_1tb_snappy_parquet.csv
 ```
 
 Output:
@@ -202,7 +202,7 @@ You will need to specify the `FB_REGION` environment variable with the same regi
 e.g. `us-east-1`, so that the COPY FROM commands target the correct regional bucket when ingesting a fresh copy of
 the base table.
 
-Again, use the power run script, `run_firenewt_powerrun.py`, to run the DML scenarios from the query history CSV files
+Again, use the power run script, `run_firepower_powerrun.py`, to run the DML scenarios from the query history CSV files
 and collect statistics.
 
 For example:
@@ -216,7 +216,7 @@ export FB_API=api.app.firebolt.io
 export FB_REGION=us-east-1
 
 cd tools
-python run_firenewt_powerrun.py --query_history=../SQL/trickle_ingestion/insert_10r_100q.csv
+python run_firepower_powerrun.py --query_history=../SQL/trickle_ingestion/insert_10r_100q.csv
 ```
 
 Output (trimmed for space):

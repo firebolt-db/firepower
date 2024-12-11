@@ -38,7 +38,7 @@ def main():
     data = cursor.fetchmany(chunk_size)
     column_names = [description[0] for description in cursor.description]    
     while data:                
-        output_file = f"firenewt_qps_{file_count}.csv"        
+        output_file = f"firepower_qps_{file_count}.csv"        
         with open(output_file, mode='w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
             writer.writerow(column_names)

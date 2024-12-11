@@ -710,7 +710,7 @@ def main():
             "sqls": s["sqls_list"],
             "sessions": sessions_list
         }        
-        with open(f"firenewt_concurrency_{s["concurrency"]}.json", "w") as f1:
+        with open(f"firepower_concurrency_{s["concurrency"]}.json", "w") as f1:
             json.dump(output_json, f1, indent=4)
 
 
